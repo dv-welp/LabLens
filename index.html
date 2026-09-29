@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<style>
+  :root{
+    --bg:#f6f5f2; --panel:#ffffff; --ink:#20201d; --muted:#7a766e;
+    --line:#e4e1da; --accent:#2f6b52; --accent-ink:#ffffff;
+    --danger:#b5432f; --warn:#b5892f; --sticky-shadow: 2px 0 6px rgba(0,0,0,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:15px;
+    overscroll-behavior:none;}
+  #app{display:flex;flex-direction:column;height:100vh;height:100dvh;}
+
+  /* ---------- Header bar ---------- */
+  #headerbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+    padding:10px 12px;background:var(--panel);border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:30;}
+  #hb-left{display:flex;justify-content:flex-start;}
+  #hb-center{text-align:center;font-weight:600;font-size:16px;cursor:pointer;user-select:none;
+    padding:4px 10px;border-radius:8px;}
+  #hb-center:active{background:var(--line);}
+  #hb-center .wk{color:var(--muted);font-weight:500;margin-left:4px;}
+  #hb-right{display:flex;justify-content:space-between;align-items:center;}
+  .arrow-btn{background:none;border:none;font-size:20px;padding:6px 10px;color:var(--ink);
+    cursor:pointer;border-radius:8px;}
+  .arrow-btn:active{background:var(--line);}
+  .arrow-btn[disabled]{visibility:hidden;}
+  #burger-btn{background:none;border:none;font-size:20px;padding:6px 10px;cursor:pointer;}
+
+  /* ---------- Burger menu ---------- */
+  #menu-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.25);z-index:40;display:none;}
+  #menu-overlay.open{display:block;}
+  #menu-panel{position:absolute;top:0;right:0;width:78%;max-width:320px;height:100%;
+    background:var(--panel);box-shadow:-4px 0 16px rgba(0,0,0,0.15);display:flex;flex-direction:column;
+    padding:16px 0;}
+  .menu-section-title{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);
+    padding:10px 16px 6px;}
+  .menu-divider{height:1px;background:var(--line);margin:8px 0;}
+  #menu-sheets-wrap{position:relative;max-height:34vh;overflow:hidden;}
+  #menu-sheets{max-height:34vh;overflow-y:auto;padding-bottom:6px;}
+  #menu-sheets-wrap::after{content:"";position:absolute;left:0;right:0;bottom:0;height:22px;
+    background:linear-gradient(to bottom, rgba(255,255,255,0), var(--panel));pointer-events:none;}
+  .menu-item{padding:10px 16px;font-size:15px;cursor:pointer;}
+  .menu-item.active{color:var(--accent);font-weight:600;}
+  .menu-item:active{background:var(--bg);}
+  .menu-toggle-row{display:flex;padding:6px 16px;gap:8px;}
+  .menu-toggle-btn{flex:1;padding:8px;text-align:center;border:1px solid var(--line);border-radius:8px;
+    cursor:pointer;font-size:14px;}
+  .menu-toggle-btn.active{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);}
+  .menu-toggle-btn.disabled{opacity:.4;pointer-events:none;}
+  #menu-help{padding:8px 16px;font-size:13px;color:var(--muted);line-height:1.5;}
+  #menu-help code{background:var(--bg);padding:1px 4px;border-radius:4px;}
+
+  /* ---------- Main scroll area ---------- */
+  #main{flex:1;overflow:auto;position:relative;-webkit-overflow-scrolling:touch;}
+
+  /* ---------- Grid view ---------- */
+  #grid-wrap{overflow:auto;height:100%;}
+  table.grid{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;}
+  table.grid th,table.grid td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+    padding:8px 10px;font-size:13px;vertical-align:top;white-space:nowrap;max-width:150px;
+    overflow:hidden;text-overflow:ellipsis;background-clip:padding-box;}
+  table.grid td.cell-data{white-space:normal;cursor:pointer;min-width:110px;max-width:180px;}
+  table.grid td.cell-data:active{background:#eef3ef;}
+  table.grid th{position:sticky;top:0;z-index:5;font-weight:600;text-align:left;}
+  table.grid td.leadcell,table.grid th.leadcell{position:sticky;left:0;z-index:6;
+    box-shadow:var(--sticky-shadow);cursor:pointer;font-weight:600;background:var(--panel);background-clip:padding-box;}
+  table.grid th.leadcell{z-index:8;}
+  table.grid tr.next-summary-row td.summary-row{background:#faf9f6;color:var(--muted);font-style:italic;position:sticky;top:37px;z-index:6;}
+  table.grid tr.next-summary-row td.leadcell.summary-row{z-index:9;background:#faf9f6;}
+  table.grid .append-col{min-width:52px;width:52px;text-align:center;padding:8px 12px;position:sticky;right:0;z-index:7;background:var(--panel);box-shadow:-2px 0 6px rgba(0,0,0,0.06);}
+  table.grid .append-col .append-btn{margin:0 auto;}
+  .append-btn{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;
+    border-radius:8px;border:1px dashed var(--line);color:var(--muted);cursor:pointer;font-size:16px;}
+  #grid-sheet-label{padding:8px 12px;color:var(--muted);font-size:12px;}
+
+  /* ---------- Day view ---------- */
+  #day-wrap{padding:12px;}
+  .day-table{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:16px;
+    overflow:hidden;}
+  .day-table h3{margin:0;padding:10px 14px;font-size:13px;text-transform:uppercase;letter-spacing:.03em;
+    color:var(--muted);background:var(--bg);border-bottom:1px solid var(--line);}
+  .day-table table{width:100%;border-collapse:collapse;}
+  .day-table td{padding:10px 14px;font-size:14px;border-bottom:1px solid var(--line);vertical-align:top;}
+  .day-table tr:last-child td{border-bottom:none;}
+  .day-table td.label{font-weight:600;width:32%;}
+  .day-table td.truncate{width:68%;}
+  .day-table td.truncate{max-width:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;}
+  .day-empty{padding:14px;color:var(--muted);font-size:13px;font-style:italic;}
+  .day-table thead td{font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:600;background:var(--bg);}
+  .day-entry{cursor:pointer;}
+  .day-entry:active{background:var(--bg);}
+  .rich-cell{display:inline;white-space:normal;}
+  .rich-editor{flex:1;min-height:32px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;line-height:1.4;background:var(--bg);outline:none;white-space:pre-wrap;overflow-wrap:anywhere;}
+  .rich-editor[contenteditable="false"]{border-color:transparent;background:transparent;padding:6px 0;}
+  .rich-editor:focus{border-color:var(--accent);}
+  .format-toolbar{display:flex;gap:6px;padding:0 0 10px;border-bottom:1px solid var(--line);margin-bottom:12px;}
+  .format-toolbar button{border:1px solid var(--line);background:var(--bg);border-radius:7px;min-width:34px;height:32px;font-size:15px;cursor:pointer;}
+  .format-toolbar button:active{background:var(--line);}
+
+  /* ---------- Cell popup ---------- */
+  #popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:50;display:none;}
+  #popup-overlay.open{display:block;}
+  #popup{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-radius:16px 16px 0 0;
+    height:82%;display:flex;flex-direction:column;box-shadow:0 -4px 20px rgba(0,0,0,.2);}
+  #popup-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;
+    border-bottom:1px solid var(--line);}
+  #popup-title{font-weight:600;font-size:15px;}
+  #popup-actions button{border:none;background:var(--bg);border-radius:8px;padding:8px 14px;
+    font-size:14px;cursor:pointer;margin-left:8px;}
+  #popup-actions button.primary{background:var(--accent);color:var(--accent-ink);}
+  #popup-body{flex:1;min-height:0;height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:12px 16px;}
+  .pop-section{margin-bottom:18px;}
+  .pop-section h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;color:var(--muted);
+    letter-spacing:.04em;}
+  .bullet-row{display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;}
+  .bullet-row .dot{margin-top:9px;color:var(--muted);}
+  .bullet-row textarea{flex:1;border:1px solid var(--line);border-radius:8px;padding:8px 10px;
+    font-size:14px;font-family:inherit;resize:none;background:var(--bg);}
+  .bullet-row textarea[readonly]{border-color:transparent;background:transparent;padding:6px 0;}
+  .add-bullet{font-size:13px;color:var(--accent);cursor:pointer;padding:4px 0;}
+  #popup-status{font-size:12px;padding:4px 16px 10px;color:var(--muted);}
+  #popup-status.failed{color:var(--danger);}
+  #popup-status.saving{color:var(--warn);}
+  .empty-note{color:var(--muted);font-style:italic;font-size:13px;}
+
+  /* ---------- Context menu (long-press) ---------- */
+  #ctx-overlay{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:60;display:none;}
+  #ctx-overlay.open{display:flex;align-items:flex-end;justify-content:center;}
+  #ctx-menu{background:var(--panel);border-radius:14px 14px 0 0;width:100%;max-width:480px;padding:6px 0 10px;}
+  #ctx-menu .ctx-title{padding:12px 16px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--line);}
+  #ctx-menu .ctx-item{padding:14px 16px;font-size:15px;cursor:pointer;}
+  #ctx-menu .ctx-item.danger{color:var(--danger);}
+  #ctx-menu .ctx-item:active{background:var(--bg);}
+
+  /* ---------- Small text input dialog (new column/row/header) ---------- */
+  #prompt-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:70;display:none;
+    align-items:center;justify-content:center;}
+  #prompt-overlay.open{display:flex;}
+  #prompt-box{background:var(--panel);border-radius:14px;padding:18px;width:85%;max-width:340px;}
+  #prompt-box input{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:15px;
+    margin:10px 0 14px;}
+  #prompt-box .row{display:flex;justify-content:flex-end;gap:8px;}
+  #prompt-box button{border:none;background:var(--bg);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  #prompt-box button.primary{background:var(--accent);color:var(--accent-ink);}
+
+  .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#20201d;color:#fff;
+    padding:8px 16px;border-radius:20px;font-size:13px;z-index:80;opacity:0;transition:opacity .2s;}
+  .toast.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="headerbar">
+    <div id="hb-left"><button class="arrow-btn" id="btn-prev">&#8592;</button></div>
+    <div id="hb-center"><span id="hb-text">Loading…</span></div>
+    <div id="hb-right">
+      <button class="arrow-btn" id="btn-next">&#8594;</button>
+      <button id="burger-btn">&#9776;</button>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="grid-wrap" style="display:none;">
+      <div id="grid-sheet-label"></div>
+      <table class="grid" id="grid-table"></table>
+    </div>
+    <div id="day-wrap" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- Burger menu -->
+<div id="menu-overlay">
+  <div id="menu-panel">
+    <div class="menu-section-title">Sheets</div>
+    <div id="menu-sheets-wrap"><div id="menu-sheets"></div></div>
+    <div class="menu-divider"></div>
+    <div class="menu-section-title">View</div>
+    <div class="menu-toggle-row">
+      <div class="menu-toggle-btn" id="menu-grid-btn">Grid</div>
+      <div class="menu-toggle-btn" id="menu-day-btn">Day view</div>
+    </div>
+    <div class="menu-divider"></div>
+    <div class="menu-section-title">Info / Help</div>
+    <div id="menu-help">
+      Cell conventions — a line must <b>start</b> with the marker (not appear mid-sentence):<br>
+      <code>L:</code> log entry &nbsp; <code>C:</code> comment &nbsp; <code>N:</code> next step<br>
+      Multiple bullets within one section are joined by <code>///</code> under the hood — you just
+      hit Enter to add another bullet. The most recent <code>N:</code> across a column's dates is
+      shown in the frozen summary row automatically.
+    </div>
+  </div>
+</div>
+
+<!-- Cell popup -->
+<div id="popup-overlay">
+  <div id="popup">
+    <div id="popup-head">
+      <div id="popup-title">—</div>
+      <div id="popup-actions">
+        <button id="popup-edit-btn">Edit</button>
+      </div>
+    </div>
+    <div id="popup-body"></div>
+    <div id="popup-status"></div>
+  </div>
+</div>
+
+<!-- Long-press context menu -->
+<div id="ctx-overlay">
+  <div id="ctx-menu">
+    <div class="ctx-title" id="ctx-title"></div>
+    <div class="ctx-item" id="ctx-insert-before">Insert before</div>
+    <div class="ctx-item" id="ctx-insert-after">Insert after</div>
+    <div class="ctx-item danger" id="ctx-delete">Delete…</div>
+  </div>
+</div>
+
+<!-- Text prompt (new header name, delete confirm) -->
+<div id="prompt-overlay">
+  <div id="prompt-box">
+    <div id="prompt-msg" style="font-size:14px;"></div>
+    <input id="prompt-input" placeholder="Name">
+    <div class="row">
+      <button id="prompt-cancel">Cancel</button>
+      <button class="primary" id="prompt-ok">OK</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<?!= include('script'); ?>
+</body>
+</html>
