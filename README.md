@@ -13,7 +13,7 @@ This layout works great on my laptop, and helps me stay sane. But on the Sheets 
 
 Each cell opens into a pop-up, allowing intuitive scrolling. I make my entry in three parts: a log of work that day, a comment if needed, and an instruction on what to do next. Each experiment has a 'next' cell frozen at the top of its column, which automatically pulls the most recent next-step entered in that column, giving me a bird's-eye view of what is to be done.
 
-In addition, something that is very good is the day view. You can shift between the grid and day view, and day view pulls the logs and plans from the Experiments, Freezing and Plan tabs to give an overview of what I'm slated to do on that day.
+In addition, something that works well is the day view. You can shift between the grid and day view, and day view pulls the logs and plans from all relevant tabs to give an overview of what I'm slated to do on that day.
 
 <p align="center">
   <img width="800" alt="lablens-screens (1)" src="https://github.com/user-attachments/assets/4dc8aaaa-535f-4d15-be89-3b6dbae0740f" />
